@@ -1,6 +1,6 @@
 {
   "name": "@prasad-edlabadka/homebridge-tuya",
-  "version": "3.1.2",
+  "version": "3.1.3",
   "description": "Homebridge plugin for local Tuya devices",
   "main": "index.js",
   "scripts": {
