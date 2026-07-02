@@ -1,7 +1,7 @@
 {
-  "name": "homebridge-tuya",
+  "name": "@prasad-edlabadka/homebridge-tuya",
 
-  "version": "3.1.1",
+  "version": "3.1.2",
 
   "description": "🏠 Offical Homebridge plugin for TuyAPI ",
   "main": "index.js",
@@ -15,14 +15,14 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/iRayanKhan/homebridge-tuya.git"
+    "url": "git+https://github.com/prasad-edlabadka/homebridge-tuya.git"
   },
   "author": "Rayan Khan",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/iRayanKhan/homebridge-tuya/issues"
+    "url": "https://github.com/prasad-edlabadka/homebridge-tuya/issues"
   },
-  "homepage": "https://github.com/iRayanKhan/homebridge-tuya#readme",
+  "homepage": "https://github.com/prasad-edlabadka/homebridge-tuya#readme",
   "dependencies": {
     "async": "^3.2.2",
     "commander": "^3.0.1",
