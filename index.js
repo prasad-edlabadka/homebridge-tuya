@@ -25,6 +25,11 @@ const OilDiffuserAccessory = require('./lib/OilDiffuserAccessory');
 
 const PLUGIN_NAME = 'homebridge-tuya';
 const PLATFORM_NAME = 'TuyaLan';
+const PERMS = {
+    READ: 'pr',
+    WRITE: 'pw',
+    NOTIFY: 'ev'
+};
 
 const CLASS_DEF = {
     outlet: OutletAccessory,
@@ -52,11 +57,61 @@ const CLASS_DEF = {
 
 let Characteristic, PlatformAccessory, Service, Categories, AdaptiveLightingController, UUID;
 
+const FALLBACK_CATEGORIES = {
+    OTHER: 1,
+    BRIDGE: 2,
+    FAN: 3,
+    GARAGE_DOOR_OPENER: 4,
+    LIGHTBULB: 5,
+    DOOR_LOCK: 6,
+    OUTLET: 7,
+    SWITCH: 8,
+    THERMOSTAT: 9,
+    SENSOR: 10,
+    SECURITY_SYSTEM: 11,
+    DOOR: 12,
+    WINDOW: 13,
+    WINDOW_COVERING: 14,
+    PROGRAMMABLE_SWITCH: 15,
+    RANGE_EXTENDER: 16,
+    CAMERA: 17,
+    VIDEO_DOORBELL: 18,
+    AIR_PURIFIER: 19,
+    AIR_HEATER: 20,
+    HEATER: 20,
+    AIR_CONDITIONER: 21,
+    HUMIDIFIER: 22,
+    DEHUMIDIFIER: 23,
+    SPRINKLER: 28,
+    FAUCET: 29,
+    SHOWER_HEAD: 30,
+    FANLIGHT: 3
+};
+
+function sanitizeHomeKitName(name, fallback = 'Unnamed') {
+    const normalized = ('' + (name || fallback))
+        .replace(/[^A-Za-z0-9' ]+/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+
+    return normalized || fallback;
+}
+
+function resolveCategories(hap) {
+    return {
+        ...FALLBACK_CATEGORIES,
+        ...((hap && hap.Accessory && hap.Accessory.Categories) || {}),
+        ...((hap && hap.Categories) || {})
+    };
+}
+
 module.exports = function(homebridge) {
+    const hap = homebridge.hap || {};
     ({
         platformAccessory: PlatformAccessory,
-        hap: {Characteristic, Service, AdaptiveLightingController, Accessory: {Categories}, uuid: UUID}
+        hap: {Characteristic, Service, AdaptiveLightingController, uuid: UUID}
     } = homebridge);
+    Categories = resolveCategories(hap);
 
     homebridge.registerPlatform(PLUGIN_NAME, PLATFORM_NAME, TuyaLan, true);
 };
@@ -169,7 +224,7 @@ class TuyaLan {
                     if (!characteristic.props ||
                         !Array.isArray(characteristic.props.perms) ||
                         characteristic.props.perms.length !== 3 ||
-                        !(characteristic.props.perms.includes('pw') && characteristic.props.perms.includes('ev'))
+                        !(characteristic.props.perms.includes(PERMS.WRITE) && characteristic.props.perms.includes(PERMS.NOTIFY))
                     ) return;
 
                     this.log.info('Marked %s unreachable by faulting Service.%s.%s', accessory.displayName, service.displayName, characteristic.displayName);
@@ -206,7 +261,7 @@ class TuyaLan {
         }
 
         if (!accessory) {
-            accessory = new PlatformAccessory(deviceConfig.name, deviceConfig.UUID, Accessory.getCategory(Categories));
+            accessory = new PlatformAccessory(sanitizeHomeKitName(deviceConfig.name), deviceConfig.UUID, Accessory.getCategory(Categories));
             accessory.getService(Service.AccessoryInformation)
                 .setCharacteristic(Characteristic.Manufacturer, deviceConfig.manufacturer || "Unknown")
                 .setCharacteristic(Characteristic.Model, deviceConfig.model || "Unknown")
@@ -215,11 +270,13 @@ class TuyaLan {
             isCached = false;
         }
 
-        if (accessory && accessory.displayName !== deviceConfig.name) {
+        const sanitizedName = sanitizeHomeKitName(deviceConfig.name);
+
+        if (accessory && accessory.displayName !== sanitizedName) {
             this.log.info(
                 "Configuration name %s differs from cached displayName %s. Updating cached displayName to %s ",
-                deviceConfig.name, accessory.displayName, deviceConfig.name);
-            accessory.displayName = deviceConfig.name;
+                deviceConfig.name, accessory.displayName, sanitizedName);
+            accessory.displayName = sanitizedName;
         }
 
         this.cachedAccessories.set(deviceConfig.UUID, new Accessory(this, accessory, device, !isCached));
@@ -230,8 +287,8 @@ class TuyaLan {
 
         this.log.warn('Unregistering', homebridgeAccessory.displayName);
 
-        delete this.cachedAccessories[homebridgeAccessory.UUID];
-        this.api.unregisterPlatformAccessories(PLATFORM_NAME, PLATFORM_NAME, [homebridgeAccessory]);
+        this.cachedAccessories.delete(homebridgeAccessory.UUID);
+        this.api.unregisterPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [homebridgeAccessory]);
     }
 
     removeAccessoryByUUID(uuid) {

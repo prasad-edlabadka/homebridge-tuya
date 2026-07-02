@@ -2,6 +2,36 @@
 
 All notable changes to this project will be documented in this file. This project uses [semantic versioning](https://semver.org/).
 
+## 3.1.5 (2026-06-20)
+This fork release fixes a Homebridge 2 startup regression introduced by the stricter Outlet path testing:
+
+* Resolve HomeKit accessory categories from both Homebridge 1 style `hap.Accessory.Categories` and Homebridge 2 style `hap.Categories`.
+* Add a stable numeric HAP category fallback so discovery cannot crash when Homebridge does not expose `Accessory.Categories`.
+
+## 3.1.4 (2026-06-20)
+This fork release tightens the Homebridge 2.1.x / Tuya 3.3 Outlet startup path:
+
+* Fixed a race where `BaseAccessory` could start the Tuya socket before the Outlet-specific connect handler was registered.
+* Added targeted debug logging for discovery payload parsing, recovered discovery payloads, discovered-device registration, discovery shutdown, connect attempts, connect failures, initial state queries, Outlet handler registration, and initial Outlet boolean state.
+* Added isolated Node.js tests for normal discovery payloads, recoverable malformed discovery payloads, recovered discovery registration/end behavior, and synchronous Outlet connect initialization.
+
+## 3.1.3 (2026-06-20)
+This fork release follows up on the Homebridge 2 compatibility work from 3.1.2:
+
+* Registered Outlet handlers as soon as the Tuya socket connects, so cached Homebridge 2 accessories can become controllable before the first full state update arrives.
+* Normalized Outlet power reads and Tuya change updates to HomeKit booleans.
+* Kept `OutletInUse` synchronized with the Outlet power state for Tuya 3.3 smart plugs.
+* Fixed stale write-result handling in `setMultiState`, including no-op writes where the requested DP value already matches the cached device state.
+* Documented the current Homebridge 2.1.x / Tuya 3.3 Outlet recovery behavior and debug markers.
+
+## 3.1.2 (2026-03-25)
+This fork release includes the following changes:
+
+* Added Homebridge 2 compatibility fixes for cached accessory restoration.
+* Sanitized invalid HomeKit accessory and service names before registration.
+* Hardened Tuya UDP discovery parsing and added recovery for malformed 6667 discovery payloads seen with some 3.3 devices.
+* Updated package metadata and compatibility notes for the `palasinio/homebridge-tuya` fork.
+
 ## 2.0.1 (2021-03-25)
 This update includes the following changes:
 

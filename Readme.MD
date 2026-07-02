@@ -1,5 +1,5 @@
 <p align="center">
-    <img src="https://raw.githubusercontent.com/iRayanKhan/homebridge-tuya/main/assets/Tuya-Plugin-Branding.png" height="100"><br>
+    <img src="https://raw.githubusercontent.com/palasinio/homebridge-tuya/main/assets/Tuya-Plugin-Branding.png" height="100"><br>
 </p>
 
 
@@ -17,6 +17,10 @@
 
 
 Control your supported Tuya accessories locally in HomeKit
+
+This fork includes Homebridge 2 compatibility fixes for cached accessories, malformed Tuya LAN discovery payloads, automatic sanitizing of invalid HomeKit accessory names, and Tuya 3.3 Outlet startup/write-state handling.
+
+Fork transparency: the `palasinio/homebridge-tuya` fork maintenance and compatibility fixes in versions 3.1.2 through 3.1.5 were developed with Codex assistance and reviewed in the local repository before release.
 
 * [Supported Device Types](#supported-device-types)
 * [Installation Instructions](#installation-instructions)
@@ -62,6 +66,14 @@ Search for "Tuya" in [homebridge-config-ui-x](https://github.com/oznu/homebridge
 sudo npm install -g homebridge-tuya
 ```
 
+## Compatibility
+
+* Homebridge `^1.8.0 || ^2.0.0-beta.0`
+* Node.js `>=18`
+* Node.js 22 LTS is recommended for Homebridge 2.x installs. Node.js 24 is not explicitly tested by this fork.
+* Tuya 3.3 devices with malformed UDP discovery payloads are handled more defensively than in the upstream 3.1.1 release.
+* Version 3.1.3 specifically targets a Homebridge 2.1.x / HAP 2.x behavior issue observed with Tuya 3.3 Outlets where discovery succeeded but cached Outlet controls could remain unavailable or non-writable.
+
 ## Configuration
 > UI
 
@@ -84,6 +96,29 @@ sudo npm install -g homebridge-tuya
 ## Troubleshooting
 1. Make sure the plugin is up-to date
 2. Check for existing issues
+
+### Homebridge 2.x Tuya 3.3 Outlet startup
+
+For a healthy Tuya 3.3 Outlet startup, the log should progress through these markers:
+
+```text
+Discovered ... identified as Outlet (3.3)
+Discovery ended.
+Connected to ...
+Ready to handle ... (Outlet:3.3) with signature ...
+```
+
+If you see:
+
+```text
+Recovered malformed discovery payload ...
+```
+
+without later `Connected to ...` and `Ready to handle ...` lines, the device was discovered but did not complete the connect/state path. Check the configured device IP, local key, network reachability from the Homebridge host, and whether the device is already holding another local LAN connection.
+
+Socket messages such as `ECONNRESET`, `ERR_PING_TIMED_OUT`, `ENETUNREACH`, `EHOSTUNREACH`, or `ERR_CONNECTION_TIMED_OUT` indicate the plugin is retrying the Tuya LAN socket after discovery. These are connect-path failures, not HomeKit name or cached-accessory restore failures.
+
+For Homebridge 2.x child bridges, a cached accessory may first be marked unreachable during restore. Version 3.1.4 registers Outlet handlers from the base socket connect path, before `_connect()` can emit, and normalizes the initial `On` / `OutletInUse` state to booleans so the Outlet can recover once the Tuya device connects and reports state.
 
 
 ## Contributing

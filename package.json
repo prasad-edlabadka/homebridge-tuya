@@ -1,12 +1,10 @@
 {
   "name": "@prasad-edlabadka/homebridge-tuya",
-
   "version": "3.1.2",
-
-  "description": "🏠 Offical Homebridge plugin for TuyAPI ",
+  "description": "Homebridge plugin for local Tuya devices",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "node test/discovery.test.js && node test/outlet-accessory.test.js && node test/homebridge2-categories.test.js"
   },
   "bin": {
     "tuya-lan": "./bin/cli.js",
@@ -39,7 +37,7 @@
     "tuya"
   ],
   "engines": {
-    "homebridge": ">=0.4.0",
-    "node": ">=8.6.0"
+    "homebridge": "^1.8.0 || ^2.0.0-beta.0",
+    "node": ">=18.0.0"
   }
 }
